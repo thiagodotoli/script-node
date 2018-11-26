@@ -1,541 +1,526 @@
 clipper = require('./clipper');
+c_infow = require('./c_infow');
 
-const cScript = (wMMatrix,wMParm,wSObjeto) => {
+function cScript(wMMatrix,wMParm,wSObjeto) {
 
     let wx,wy,wPos,wMatrixResult,wMatrixLinha,wWork;
     let wFor = false;
     let wBlcNum = 0;
 
-    clipper.aAdd(wBlc,"");              // Bloco 01 reservado para o PARAMETERS
-    clipper.aAdd(wBlx,0);               // Bloco 01 reservado para o PARAMETERS
-    clipper.aAdd(wBlc_Open,false);      // Bloco 01 reservado para o PARAMETERS
+    clipper.clipper.aAdd(wBlc,"");              // Bloco 01 reservado para o PARAMETERS
+    clipper.clipper.aAdd(wBlx,0);               // Bloco 01 reservado para o PARAMETERS
+    clipper.clipper.aAdd(wBlc_Open,false);      // Bloco 01 reservado para o PARAMETERS
 
-    clipper.aAdd(wBlc,"");              // Bloco 02 reservado para o PRIVATE
-    clipper.aAdd(wBlx,0);               // Bloco 02 reservado para o PRIVATE
-    clipper.aAdd(wBlc_Open,false);      // Bloco 02 reservado para o PRIVATE
+    clipper.clipper.aAdd(wBlc,"");              // Bloco 02 reservado para o PRIVATE
+    clipper.clipper.aAdd(wBlx,0);               // Bloco 02 reservado para o PRIVATE
+    clipper.clipper.aAdd(wBlc_Open,false);      // Bloco 02 reservado para o PRIVATE
 
-    clipper.aAdd(wBlc,"");
-    clipper.aAdd(wBlx,0);
-    clipper.aAdd(wBlc_Open,true);
-    wBlcNum = clipper.len(wBlc);
+    clipper.clipper.aAdd(wBlc,"");
+    clipper.clipper.aAdd(wBlx,0);
+    clipper.clipper.aAdd(wBlc_Open,true);
+    wBlcNum = clipper.clipper.len(wBlc);
    
-    for(var wx=1; wx<=clipper.len(wMMatrix); wx++) {
-       wMatrixResult = wMMatrix[wx];
-       wMatrixLinha  = wx;
-       if(clipper.upper(clipper.substr(wMMatrix[wx],1,11)) == "PARAMETERS ") {
-          wBlc[01]   := wBlc[01] + iif(cEmpty(wBlc[01]),Space(00),",") + AllTrim(Substr(wMMatrix[wx],11))     // Bloco 01 é fixo para o PARAMETERS
-          wMatrixResult := Space(00)
-       ElseIf Upper(Substr(wMMatrix[wx],1,8)) = "PRIVATE "
-          wBlc[02]   := wBlc[02] + iif(cEmpty(wBlc[02]),Space(00),",") + AllTrim(Substr(wMMatrix[wx],8))      // Bloco 02 é fixo para o PRIVATE
-          wMatrixResult := Space(00)
-       ElseIf At(":=",wMMatrix[wx]) > 0 
-          wPos          := At(":=",wMMatrix[wx])
-          wMatrixResult := "cVar_Atrib('" + AllTrim(SubStr(wMMatrix[wx],1,wPos-1)) + "'," + SubStr(wMMatrix[wx],wPos+2)+" )"
-       ElseIf Upper(Substr(wMMatrix[wx],1,1)) == "?"
-          wMMatrix[wx]   := "WQout({" + Alltrim(Substr(wMMatrix[wx],2)) + "})"
-          wMatrixResult := wMMatrix[wx]
-       ElseIf Upper(Substr(wMMatrix[wx],1,3)) = "IF "
-          If .not. cEmpty(wBlc[wBlcNum])
-             wBlc[wBlcNum] := wBlc[wBlcNum] + ","
-          EndIf
-          If wcDebug
-             wBlc[wBlcNum] := wBlc[wBlcNum] + "fdbg_Goto(022," + strzero(wBlcNum+1,3) + ")"
-          Else
-             wBlc[wBlcNum] := wBlc[wBlcNum] + "eVal(fcBlock(wBlc[" + strzero(wBlcNum+1,3) + "]))"
-          EndIf
-          aAdd(wBlc,Space(00))
-          aAdd(wBlx,00       )
-          aAdd(wBlc_Open,.t.)
-          wBlcNum := Len(wBlc)
+    for(var wx=1; wx<=clipper.clipper.len(wMMatrix); wx++) {
+        wMatrixResult = wMMatrix[wx];
+        wMatrixLinha  = wx;
+        if(clipper.clipper.upper(clipper.substr(wMMatrix[wx],1,11)) == "PARAMETERS ") {
+            wBlc[01]      = wBlc[01] + (c_infow.cEmpty(wBlc[01]) ? "" : ",") + clipper.allTrim(clipper.substr(wMMatrix[wx],11));     // Bloco 01 é fixo para o PARAMETERS
+            wMatrixResult = "";
+        } else if(clipper.clipper.upper(clipper.substr(wMMatrix[wx],1,8)) = "PRIVATE ") {
+            wBlc[02]      = wBlc[02] + (c_infow.cEmpty(wBlc[02]),"",",") + clipper.allTrim(clipper.substr(wMMatrix[wx],8));      // Bloco 02 é fixo para o PRIVATE
+            wMatrixResult = "";
+        } else if(clipper.at("=",wMMatrix[wx]) > 0) { 
+            wPos          = clipper.at("=",wMMatrix[wx]);
+            wMatrixResult = "cVar_Atrib('" + clipper.allTrim(clipper.substr(wMMatrix[wx],1,wPos-1)) + "'," + clipper.substr(wMMatrix[wx],wPos+2)+" )";
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,1)) == "?") {
+            wMMatrix[wx]  = "WQout({" + clipper.allTrim(clipper.substr(wMMatrix[wx],2)) + "})";
+            wMatrixResult = wMMatrix[wx];
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,3)) == "IF ") {
+            if(!c_infow.cEmpty(wBlc[wBlcNum])) {
+                wBlc[wBlcNum] = wBlc[wBlcNum] + ",";
+            }
+            if(wcDebug) {
+                wBlc[wBlcNum] = wBlc[wBlcNum] + "fdbg_Goto(022," + clipper.strzero(wBlcNum+1,3) + ")";
+            } else {
+                wBlc[wBlcNum] = wBlc[wBlcNum] + "eVal(fcBlock(wBlc[" + clipper.strzero(wBlcNum+1,3) + "]))";
+            }
+            clipper.aAdd(wBlc,"");
+            clipper.aAdd(wBlx,0);
+            clipper.aAdd(wBlc_Open,true);
+            wBlcNum = clipper.len(wBlc);
 
-          wMMatrix[wx]   := "cIf(" + Substr(wMMatrix[wx],4) + ","
-          If wcDebug
-             wMatrixResult   :=  wMMatrix[wx] + "'fdbg_Goto(04," + strzero( wBlcNum+1 ,3) + ")')"
-          Else
-             wMatrixResult    := wMMatrix[wx] + "(wBlc[" + strzero( wBlcNum+1 ,3) + "]))"   
-          EndIf
+            wMMatrix[wx] = "cIf(" + clipper.substr(wMMatrix[wx],4) + ",";
+            if(wcDebug) {
+                wMatrixResult = wMMatrix[wx] + "'fdbg_Goto(04," + clipper.strzero( wBlcNum+1 ,3) + ")')";
+            } else {
+                wMatrixResult = wMMatrix[wx] + "(wBlc[" + clipper.strzero( wBlcNum+1 ,3) + "]))";
+            }
 
-          wBlc[wBlcNum] := wMatrixResult
-          wBlx[wBlcNum] := wx
-          wMatrixResult := Space(00)
+            wBlc[wBlcNum] = wMatrixResult;
+            wBlx[wBlcNum] = wx;
+            wMatrixResult = "";
 
-          aAdd(wBlc,Space(00))
-          aAdd(wBlx,00       )
-          aAdd(wBlc_Open,.t.)
-          wBlcNum := Len(wBlc)
+            clipper.aAdd(wBlc,"");
+            clipper.aAdd(wBlx,0);
+            clipper.aAdd(wBlc_Open,true);
+            wBlcNum = clipper.len(wBlc);
 
-       ElseIf Upper(Substr(wMMatrix[wx],1,4)) = "FOR "
-          If .not. cEmpty(wBlc[wBlcNum])
-             wBlc[wBlcNum] := wBlc[wBlcNum] + ","
-          EndIf
-          If wcDebug
-             wBlc[wBlcNum] := wBlc[wBlcNum] + "fdbg_Goto(023," + strzero(wBlcNum+1,3) + ")"
-          Else
-             wBlc[wBlcNum] := wBlc[wBlcNum] + "eVal(fcBlock(wBlc[" + strzero(wBlcNum+1,3) + "]))"
-          EndIf
-          aAdd(wBlc,Space(00))
-          aAdd(wBlx,00       )
-          aAdd(wBlc_Open,.t.)
-          wBlcNum := Len(wBlc)
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,4)) == "FOR ") {
+            if(!c_infow.cEmpty(wBlc[wBlcNum])) {
+                wBlc[wBlcNum] = wBlc[wBlcNum] + ",";
+            }
+            if(wcDebug) {
+                wBlc[wBlcNum] = wBlc[wBlcNum] + "fdbg_Goto(023," + clipper.strzero(wBlcNum+1,3) + ")";
+            } else {
+                wBlc[wBlcNum] = wBlc[wBlcNum] + "eVal(fcBlock(wBlc[" + clipper.strzero(wBlcNum+1,3) + "]))";
+            }
+            clipper.aAdd(wBlc,"");
+            clipper.aAdd(wBlx,0);
+            clipper.aAdd(wBlc_Open,true);
+            wBlcNum = clipper.len(wBlc);
        
-          wMMatrix[wx] := 'cFor("' + Substr(wMMatrix[wx],5) + ","
-          wMMatrix[wx] := StrTran(wMMatrix[wx],'=','",')
-          wMMatrix[wx] := StrTran(wMMatrix[wx],'to',',')
-          wMMatrix[wx] := StrTran(wMMatrix[wx],'To',',')
-          wMMatrix[wx] := StrTran(wMMatrix[wx],'TO',',')
-          wMMatrix[wx] := StrTran(wMMatrix[wx],'step',',')
-          wMMatrix[wx] := StrTran(wMMatrix[wx],'Step',',')
-          wMMatrix[wx] := StrTran(wMMatrix[wx],'STEP',',')
-          wMMatrix[wx] := wMMatrix[wx] +  "'" + Substr(wMMatrix[wx],7,3) + "'," 
+            wMMatrix[wx] = 'cFor("' + clipper.substr(wMMatrix[wx],5) + ",";
+            wMMatrix[wx] = StrTran(wMMatrix[wx],'=','",');
+            wMMatrix[wx] = StrTran(wMMatrix[wx],'to',',');
+            wMMatrix[wx] = StrTran(wMMatrix[wx],'To',',');
+            wMMatrix[wx] = StrTran(wMMatrix[wx],'TO',',');
+            wMMatrix[wx] = StrTran(wMMatrix[wx],'step',',');
+            wMMatrix[wx] = StrTran(wMMatrix[wx],'Step',',');
+            wMMatrix[wx] = StrTran(wMMatrix[wx],'STEP',',');
+            wMMatrix[wx] = wMMatrix[wx] +  "'" + clipper.substr(wMMatrix[wx],7,3) + "',";
                                                                                                                                        
-          If wcDebug 
-             wMatrixResult := wMMatrix[wx] + "'fdbg_Goto(03," + strzero( Len(wBlc)+1,3) + ")'" 
-          Else
-             wMatrixResult := wMMatrix[wx] + "(wBlc[" + strzero( Len(wBlc)+1  ,3) + '])' 
-          EndIf 
+            if(wcDebug) {
+                wMatrixResult = wMMatrix[wx] + "'fdbg_Goto(03," + clipper.strzero( clipper.len(wBlc)+1,3) + ")'";
+            } else {
+                wMatrixResult = wMMatrix[wx] + "(wBlc[" + clipper.strzero( clipper.len(wBlc)+1  ,3) + '])';
+            }
                                                                                                                                     
-          wBlc[wBlcNum] := wMatrixResult                                                                         
-          wBlx[wBlcNum] := wx 
-          If wcDebug
-             //wBlc[wBlcNum] := wBlc[wBlcNum] + ",fdbg_Goto(019," + strzero(wBlcNum+1 ,3) + ") "
-          Else
-             //wBlc[wBlcNum] := wBlc[wBlcNum] + ",eVal(fcBlock(wBlc[" + strzero(wBlcNum+1 ,3) + "]))"
-          EndIf
+            wBlc[wBlcNum] = wMatrixResult                                                                         
+            wBlx[wBlcNum] = wx 
+            if(wcDebug) {
+                //wBlc[wBlcNum] = wBlc[wBlcNum] + ",fdbg_Goto(019," + clipper.strzero(wBlcNum+1 ,3) + ") "
+            Else
+                //wBlc[wBlcNum] = wBlc[wBlcNum] + ",eVal(fcBlock(wBlc[" + clipper.strzero(wBlcNum+1 ,3) + "]))"
+            EndIf
 
-          aAdd(wBlc,Space(00))
-          aAdd(wBlx,00       )
-          aAdd(wBlc_Open,.t.)
-          wBlcNum := Len(wBlc)
+            clipper.aAdd(wBlc,"");
+            clipper.aAdd(wBlx,0);
+            clipper.aAdd(wBlc_Open,true);
+            wBlcNum = clipper.len(wBlc);
 
-          wMatrixResult := Space(00)
+            wMatrixResult = "";
 
-       ElseIf Upper(Substr(wMMatrix[wx],1,4)) == "ELSE"
-          wMatrixResult := space(00)
-       ElseIf Upper(Substr(wMMatrix[wx],1,5)) == "ENDIF"
-          wMatrixResult := space(00)
-       ElseIf Upper(Substr(wMMatrix[wx],1,4)) == "NEXT"
-          wMatrixResult := space(00)
-       ElseIf Upper(Substr(wMMatrix[wx],1,4)) == "ENDW"
-          wMatrixResult := space(00)
-       ElseIf Upper(Substr(wMMatrix[wx],1,6)) = "WHILE "
-          wMMatrix[wx]   := "cWhile(" + Substr(wMMatrix[wx],7) + ","
-          wMatrixResult := wMMatrix[wx]
-       ElseIf Upper(Substr(wMMatrix[wx],1,4)) == "ENDW"
-          wMatrixResult := space(00)
-       ElseIf Upper(Substr(wMMatrix[wx],1,6)) == "RETURN"
-          wMMatrix[wx]   := "cScriptReturn(" + Alltrim(Substr(wMMatrix[wx],7)) + ")#RETURN#"
-          wMatrixResult := wMMatrix[wx]
-       ElseIf Upper(Substr(wMMatrix[wx],1,4)) = "EXIT"
-          If .not. cEmpty(wBlc[wBlcNum])
-             If wcDebug
-                wBlc[wBlcNum] := wBlc[wBlcNum] + ",fdbg_Goto(01," + strzero(wBlcNum+1 ,3) + ") "
-             Else
-                wBlc[wBlcNum] := wBlc[wBlcNum] + ",eVal(fcBlock(wBlc[" + strzero(wBlcNum+1 ,3) + "]))"
-             EndIf
-             aAdd(wBlc,Space(00))
-             aAdd(wBlx,00       )
-             aAdd(wBlc_Open,.t.)
-             wBlcNum := Len(wBlc)
-          EndIf
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,4)) == "ELSE") {
+          wMatrixResult = "";
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,5)) == "ENDIF") {
+          wMatrixResult = "";
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,4)) == "NEXT") {
+          wMatrixResult = "";
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,4)) == "ENDW") {
+          wMatrixResult = "";
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,6)) = "WHILE ") {
+          wMMatrix[wx]   = "cWhile(" + clipper.substr(wMMatrix[wx],7) + ","
+          wMatrixResult = wMMatrix[wx];
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,4)) == "ENDW") {
+          wMatrixResult = "";
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,6)) == "RETURN") {
+          wMMatrix[wx]  = "cScriptReturn(" + clipper.allTrim(clipper.substr(wMMatrix[wx],7)) + ")#RETURN#";
+          wMatrixResult = wMMatrix[wx];
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,4)) == "EXIT") {
+            if(!c_infow.cEmpty(wBlc[wBlcNum])) {
+                if(wcDebug) {
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + ",fdbg_Goto(01," + clipper.strzero(wBlcNum+1 ,3) + ") ";
+                } else {
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + ",eVal(fcBlock(wBlc[" + clipper.strzero(wBlcNum+1 ,3) + "]))";
+                }
+                clipper.aAdd(wBlc,"");
+                clipper.aAdd(wBlx,0);
+                clipper.aAdd(wBlc_Open,true);
+                wBlcNum = clipper.len(wBlc);
+            }
 
-          wMatrixResult := 'cScriptForExit("' + Substr(wMMatrix[wx],5,3) + '")'
-          wBlc[wBlcNum] := wMatrixResult
-          wBlx[wBlcNum] := wx
-          wMatrixResult := Space(00)
+            wMatrixResult = 'cScriptForExit("' + clipper.substr(wMMatrix[wx],5,3) + '")';
+            wBlc[wBlcNum] = wMatrixResult;
+            wBlx[wBlcNum] = wx;
+            wMatrixResult = "";
 
-          aAdd(wBlc,Space(00))
-          aAdd(wBlx,00       )
-          aAdd(wBlc_Open,.t.)
-          wBlcNum := Len(wBlc)
+            clipper.aAdd(wBlc,"");
+            clipper.aAdd(wBlx,0);
+            clipper.aAdd(wBlc_Open,true);
+            wBlcNum = clipper.len(wBlc);
 
-       ElseIf Upper(Substr(wMMatrix[wx],1,4)) = "LOOP"
-          If .not. cEmpty(wBlc[wBlcNum])
-             If wcDebug
-                wBlc[wBlcNum] := wBlc[wBlcNum] + ",fdbg_Goto(02," + strzero(wBlcNum+1 ,3) + ") "
-             Else
-                wBlc[wBlcNum] := wBlc[wBlcNum] + ",eVal(fcBlock(wBlc[" + strzero(wBlcNum+1 ,3) + "]))"
-             EndIf
+        } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,4)) == "LOOP") {
+            if(!c_infow.cEmpty(wBlc[wBlcNum])) {
+                if(wcDebug) {
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + ",fdbg_Goto(02," + clipper.strzero(wBlcNum+1 ,3) + ") ";
+                } else {
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + ",eVal(fcBlock(wBlc[" + clipper.strzero(wBlcNum+1 ,3) + "]))";
+                }
 
-             aAdd(wBlc,Space(00))
-             aAdd(wBlx,00       )
-             aAdd(wBlc_Open,.t.)
-             wBlcNum := Len(wBlc)
-          EndIf
+                clipper.aAdd(wBlc,"");
+                clipper.aAdd(wBlx,0);
+                clipper.aAdd(wBlc_Open,true);
+                wBlcNum = clipper.len(wBlc);
+            }
 
-          wMatrixResult := 'cScriptForLoop("' + Substr(wMMatrix[wx],5,3) + '")'
-          wBlc[wBlcNum] := wMatrixResult
-          wBlx[wBlcNum] := wx
-          wMatrixResult := Space(00)
+            wMatrixResult = 'cScriptForLoop("' + clipper.substr(wMMatrix[wx],5,3) + '")';
+            wBlc[wBlcNum] = wMatrixResult;
+            wBlx[wBlcNum] = wx;
+            wMatrixResult = "";
 
-          aAdd(wBlc,Space(00))
-          aAdd(wBlx,00       )
-          aAdd(wBlc_Open,.t.)
-          wBlcNum := Len(wBlc)
+            clipper.aAdd(wBlc,"");
+            clipper.aAdd(wBlx,0);
+            clipper.aAdd(wBlc_Open,true);
+            wBlcNum = clipper.len(wBlc);
 
-       ElseIf wMMatrix[wx] = "{"
-
-          wMatrixResult   := Space(00)
-
-       ElseIf wMMatrix[wx] = "}"
-          wMatrixResult   := Space(00)
+        } else if(wMMatrix[wx] == "{") {
+            wMatrixResult = "";
+        } else if(wMMatrix[wx] == "}") {
+            wMatrixResult = "";
           
-          For wy= wBlcNum-1 to 1 step -1
-              If wBlc_Open[wy] = .t.
-                 wBlcNum          := WY
-                 wBlc_Open[wy] := .f.
-                 Exit
-              Endif
-          Next
+            for(var wy=wBlcNum-1; wy >= 1; wy--) {
+                if(wBlc_Open[wy]) {
+                 wBlcNum       = wy
+                 wBlc_Open[wy] = false;
+                 break;
+                }
+            }
           
-          If Substr(wMMatrix[wx],1,5) == "}Then"  //.and. Substr(wMMatrix[wx],9,3) == "Fec" // }Then001Fecha
+            if(clipper.substr(wMMatrix[wx],1,5) == "}Then") { //.and. clipper.substr(wMMatrix[wx],9,3) == "Fec" // }Then001Fecha
 
-             wIfNum := Substr(wMMatrix[wx],6,3)
-             wBlcNum := 0
-             For wy=1 to len(wBlc)
-                 If wBlc[wy] = "cIf("+ wIfNum 
-                    wBlcNum := WY
-                    Exit
-                 Endif
-             Next
-
-             If Substr(wMMatrix[wx-1],1,8) == "{Then" + wIfNum // {Then001Abre
-                *Se nao tem THEN redireciona para o EndIf
-                *wMMatrix[wx]   := "cIf(" + Substr(wMMatrix[wx],4) + ","
-                If wcDebug
-                   wBlc[wBlcNum] :=  wMMatrix[wBlx[wBlcNum]] + "'fdbg_Goto(044,GotoEndIf)')"
-                Else
-                   wBlc[wBlcNum] := wMMatrix[wBlx[wBlcNum]] + "(wBlc[GotoEndIf]))"   
-                EndIf
-             EndIf
+                wIfNum = clipper.substr(wMMatrix[wx],6,3);
+                wBlcNum = 0;
+                for(var wy=1; wy<=clipper.len(wBlc); wy++) {
+                    if(wBlc[wy] == ("cIf(" + wIfNum)) { 
+                        wBlcNum = wy;
+                        break;
+                    }
+                }
              
-             If wcDebug
-                wWork  :=  "ELSE"+wIfNum + ",'fdbg_Goto(07," + strzero( Len(wBlc)+1  ,3) + ")') " 
-             Else
-               wWork   :=  "ELSE"+wIfNum + ",(wBlc[" + strzero( Len(wBlc)+1  ,3) + "])) " 
-             EndIf
+                if(clipper.substr(wMMatrix[wx-1],1,8) == ("{Then"+wIfNum)) { // {Then001Abre
+                    // *Se nao tem THEN redireciona para o EndIf
+                    // *wMMatrix[wx]   = "cIf(" + clipper.substr(wMMatrix[wx],4) + ","
+                    if(wcDebug) {
+                        wBlc[wBlcNum] =  wMMatrix[wBlx[wBlcNum]] + "'fdbg_Goto(044,GotoEndIf)')";
+                    } else {
+                        wBlc[wBlcNum] = wMMatrix[wBlx[wBlcNum]] + "(wBlc[GotoEndIf]))";
+                    }
+                }
              
-             wBlc[wBlcNum]      := SubStr(wBlc[wBlcNum],1,Len(Trim(wBlc[wBlcNum]))-1) + wWork
+                if(wcDebug) {
+                    wWork = "ELSE" + wIfNum + ",'fdbg_Goto(07," + clipper.strzero(clipper.len(wBlc)+1,3) + ")') ";
+                } else {
+                    wWork = "ELSE" + wIfNum + ",(wBlc[" + clipper.strzero(clipper.len(wBlc)+1,3) + "])) ";
+                }
 
-             wBlc[len(wBlc)] := "BTHEN"+wIfNum + wBlc[len(wBlc)]
-             
-             aAdd(wBlc,Space(00))
-             aAdd(wBlx,00       )
-             aAdd(wBlc_Open,.t.)
-             wBlcNum := Len(wBlc)
+                wBlc[wBlcNum] = clipper.substr(wBlc[wBlcNum],1,clipper.len(Trim(wBlc[wBlcNum]))-1) + wWork;
 
-             wBlx[Len(wBlc)] := wx+1
-   
-             wMatrixResult := Space(00)
+                wBlc[clipper.len(wBlc)] = "BTHEN" + wIfNum + wBlc[clipper.len(wBlc)];
+
+                clipper.aAdd(wBlc,"");
+                clipper.aAdd(wBlx,0);
+                clipper.aAdd(wBlc_Open,true);
+                wBlcNum = clipper.len(wBlc);
+
+                wBlx[clipper.len(wBlc)] = wx+1;
+
+                wMatrixResult = "";
           
-          ElseIf Substr(wMMatrix[wx],1,6) == "}EndIf"  //.and. Substr(wMMatrix[wx],10,3) == "Ext" // }EndIf001Ext
+            } else if(clipper.substr(wMMatrix[wx],1,6) == "}EndIf") {  //.and. clipper.substr(wMMatrix[wx],10,3) == "Ext" // }EndIf001Ext
 
-             aAdd(wBlc,Space(00))
-             aAdd(wBlx,00       )
-             aAdd(wBlc_Open,.t.)
-             wBlcNum := Len(wBlc)
+                clipper.aAdd(wBlc,"");
+                clipper.aAdd(wBlx,0);
+                clipper.aAdd(wBlc_Open,true);
+                wBlcNum = clipper.len(wBlc);
 
-             wBlx[wBlcNum] := wx-1
+                wBlx[wBlcNum] = wx-1;
+
+                wIfNum = clipper.substr(wMMatrix[wx],7,3);
+                //*-----direciona o bloco cIf------------*
+                wBlcNum = 0;
+                wy = 0;
+                for(var wy=1; wy<=clipper.len(wBlc); wy++) {
+                    if(wBlc[wy] == ("cIf("+wIfNum)) { 
+                        wBlcNum = wy;
+                        break;
+                    }
+                }
+                if(wBlcNum > 0) {
+                    if(clipper.at("GotoEndIf",wBlc[wBlcNum]) > 0) {
+                        wBlc[wBlcNum] = StrTran(wBlc[wBlcNum],"GotoEndIf",clipper.strzero(clipper.len(wBlc),3,0));
+                    }
+                }
+                //*--------------------------------------*
+
+                //*-----direciona o bloco THEN-----------*
+                wBlcNum = 0;
+                wy = 0;
+                for(var wy=1; wy<=clipper.len(wBlc); wy++) {
+                    if(wBlc[wy] == ("BTHEN"+wIfNum)) {
+                        wBlcNum = wy;
+                        break;
+                    }
+                }  
+
+                if(wBlcNum > 0) {
+                    if(wcDebug) {
+                        wWork = "fdbg_Goto(09," + clipper.strzero( clipper.len(wBlc),3) + ")";
+                    } else {
+                        wWork = "eVal(fcBlock(wBlc[" + clipper.strzero( clipper.len(wBlc),3) + "]))";
+                    }
+
+                    if(clipper.len(clipper.trim(wBlc[wBlcNum])) != clipper.len(clipper.trim("BTHEN"+wIfNum))) {
+                        wBlc[wBlcNum] = wBlc[wBlcNum] + ",";
+                    }
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + wWork;
+                }
+                //*--------------------------------------*
+                //*-----direciona o bloco ELSE------------*
+                wBlcNum = clipper.len(wBlc)-1;  // O bloco anterior e´o ELSE
+                if(wcDebug) {
+                    wWork = "fdbg_Goto(010," + clipper.strzero(clipper.len(wBlc),3) + ")";
+                } else {
+                    wWork = "eVal(fcBlock(wBlc[" + clipper.strzero(clipper.len(wBlc),3) + "]))";
+                }
+                
+                if(!c_infow.cEmpty(wBlc[wBlcNum])) {
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + ",";
+                }
+                wBlc[wBlcNum] = wBlc[wBlcNum] + wWork;
+                //*--------------------------------------*
+
+            } else if(clipper.upper(clipper.substr(wMMatrix[wx],1,5)) == "}EndW") { //.and. clipper.substr(wMMatrix[wx],9,3) == "Ext" // }EndW001Ext
+
+            } else if(clipper.substr(wMMatrix[wx],1,5) == "}Next") {  //.and. clipper.substr(wMMatrix[wx],9,3) == "Ext" // }Next001Ext
+
+                wBlcNum = clipper.len(wBlc); 
+                if(wcDebug) {
+                    wWork = "fdbg_Goto(026," + clipper.strzero( wBlcNum +1,3) + ")";
+
+                    if(!c_infow.cEmpty(wBlc[wBlcNum])) {
+                        wBlc[wBlcNum] = wBlc[wBlcNum] + ",";
+                    }
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + wWork;
+                }
+                //*-----direciona o bloco cFor-----------*                                               
+                wForNum = clipper.substr(wMMatrix[wx],6,3);
+                wBlcNum = 0;
+                wy      = 0;
+                for(var wy=1; wy<=clipper.len(wBlc); wy++) {
+                    if(wBlc[wy] == ('cFor("' + wForNum)) { 
+                        wBlcNum = wy;
+                        break;
+                    }
+                }
              
-                                                                                                   
-             wIfNum := Substr(wMMatrix[wx],7,3)
-             *-----direciona o bloco cIf------------*
-             wBlcNum := 0
-             wy := 00
-             For wy=1 to len(wBlc)
-                 If wBlc[wy] = "cIf("+ wIfNum 
-                    wBlcNum := WY
-                    Exit
-                 Endif
-             Next
-             If wBlcNum > 0
-                If At("GotoEndIf",wBlc[wBlcNum]) > 0
-                   wBlc[wBlcNum] := StrTran(wBlc[wBlcNum],"GotoEndIf",StrZero(Len(wBlc),3,0))
-                EndIf
-             EndIf
-             *--------------------------------------*
+                if(wBlcNum > 0) {
+                    //*--------------------------------------*
+                    clipper.aAdd(wBlc,"");
+                    clipper.aAdd(wBlx,0);
+                    clipper.aAdd(wBlc_Open,true);
 
-             *-----direciona o bloco THEN-----------*
-             wBlcNum := 0
-             wy := 00
-             For wy=1 to Len(wBlc)
-                 If wBlc[wy] = "BTHEN"+wIfNum 
-                    wBlcNum := WY
-                    Exit
-                 Endif
-             Next   
+                    wBlx[clipper.len(wBlc) ] = wx-1;
 
-             If wBlcNum > 0
-                If wcDebug
-                   wWork := "fdbg_Goto(09," + strzero( Len(wBlc)    ,3) + ")"
-                Else
-                   wWork := "eVal(fcBlock(wBlc[" + strzero( Len(wBlc)    ,3) + "]))"
-                EndIf
-                If Len(Trim(wBlc[wBlcNum])) <> Len(Trim("BTHEN"+wIfNum))
-                   wBlc[wBlcNum] := wBlc[wBlcNum] + ","
-                EndIf
-                wBlc[wBlcNum] := wBlc[wBlcNum] + wWork
-             EndIf
-             *--------------------------------------*
-             *-----direciona o bloco ELSE------------*
-             wBlcNum       := Len(wBlc) -1  // O bloco anterior e´o ELSE
-             If wcDebug
-                wWork := "fdbg_Goto(010," + strzero(  Len(wBlc)  ,3) + ")"
-             Else
-                wWork := "eVal(fcBlock(wBlc[" + strzero(  Len(wBlc)  ,3) + "]))"
-             EndIf
-             
-             If .not. cEmpty(wBlc[wBlcNum])
-                wBlc[wBlcNum] := wBlc[wBlcNum] + ","
-             EndIf
-             wBlc[wBlcNum] := wBlc[wBlcNum] + wWork  
-             *--------------------------------------*
+                    if(wcDebug) {
+                        wBlc[clipper.len(wBlc)] = "fdbg_Goto(014," + clipper.strzero( wBlcNum ,3) + ")";
+                    } else {
+                        wBlc[clipper.len(wBlc)] = "eVal(fcBlock(wBlc[" + clipper.strzero( wBlcNum ,3) + "]))";
+                    }
 
-          ElseIf Upper(Substr(wMMatrix[wx],1,5)) == "}EndW"  //.and. Substr(wMMatrix[wx],9,3) == "Ext" // }EndW001Ext
+                    if(wcDebug) {
+                        wBlc[wBlcNum] = wBlc[wBlcNum] + ",'fdbg_Goto(025," + clipper.strzero( clipper.len(wBlc)+1 ,3) + ")')";
+                    } else {
+                        wBlc[wBlcNum] = wBlc[wBlcNum] + ",(wBlc[" + clipper.strzero( clipper.len(wBlc)+1,3) + "]))";
+                    }
 
-          ElseIf Substr(wMMatrix[wx],1,5) == "}Next"  //.and. Substr(wMMatrix[wx],9,3) == "Ext" // }Next001Ext
+                }
+                // *--------------------------------------*
+                // *-----------------------------------------*
 
-             wBlcNum := Len(wBlc) 
-             If wcDebug
-                wWork := "fdbg_Goto(026," + strzero( wBlcNum +1,3) + ")"
+                clipper.aAdd(wBlc,"");
+                clipper.aAdd(wBlx,0);
+                clipper.aAdd(wBlc_Open,true);
+                wBlcNum = clipper.len(wBlc);
 
-                If .not. cEmpty(wBlc[wBlcNum])
-                   wBlc[wBlcNum] := wBlc[wBlcNum] + ","
-                EndIf
-                wBlc[wBlcNum] := wBlc[wBlcNum] + wWork  
+                wMatrixResult = "";
 
-             Else
-                *wWork := "eVal(fcBlock(wBlc[" + strzero(wBlcNum +1,3) + "]))"
-                *If .not. cEmpty(wBlc[wBlcNum])
-                *   wBlc[wBlcNum] := wBlc[wBlcNum] + ","
-                *EndIf
-                *wBlc[wBlcNum] := wBlc[wBlcNum] + wWork  
-
-
-
-             EndIf
-             *If .not. cEmpty(wBlc[wBlcNum])
-             *   wBlc[wBlcNum] := wBlc[wBlcNum] + ","
-             *EndIf
-             *wBlc[wBlcNum] := wBlc[wBlcNum] + wWork  
-             
-             
-
-             *-----direciona o bloco cFor-----------*                                               
-             wForNum := Substr(wMMatrix[wx],6,3)
-             wBlcNum := 0
-             wy      := 00
-             For wy=1 to len(wBlc)
-                 If wBlc[wy] = 'cFor("' + wForNum 
-                    wBlcNum := WY
-                    Exit
-                 Endif
-             Next
-             If wBlcNum > 0
-             
-                *--------------------------------------*
-                aAdd(wBlc,Space(00))
-                aAdd(wBlx,00       )
-                aAdd(wBlc_Open,.t.)
-
-                *wBlx[wBlcNum] := wx-1
-                *wBlx[Len(wBlc) - 1] := wx
-                *wBlx[wBlcNum] := wx-1
-
-                wBlx[Len(wBlc) ] := wx -1
-
-                If wcDebug
-                   wBlc[Len(wBlc)] := "fdbg_Goto(014," + strzero( wBlcNum ,3) + ")"
-                Else
-                   wBlc[Len(wBlc)] := "eVal(fcBlock(wBlc[" + strzero( wBlcNum ,3) + "]))"
-                EndIf
-
-                *If .not. cEmpty(wBlc[wBlcNum])
-                *   wBlc[wBlcNum] := wBlc[wBlcNum] + ","
-                *EndIf
-                *wBlc[wBlcNum] := wBlc[wBlcNum] + wMatrixResult  
-                *--------------------------------------*
-             
-                //If Substr(wMMatrix[wx-2],1,7) == "{For" + wForNum // {For001Ext
-                //   If wcDebug
-                //      wBlc[wBlcNum] := wMMatrix[wBlx[wBlcNum]] + "'fdbg_Goto(024," + strzero(Len(wBlc)+0,3) + ")'"
-                //   Else
-                //      wBlc[wBlcNum] := wMMatrix[wBlx[wBlcNum]] + "wBlc["           + strzero(Len(wBlc)-1,3) + "]"
-                //   EndIf
-                //EndIf
-
-                If wcDebug
-                   wBlc[wBlcNum] := wBlc[wBlcNum] + ",'fdbg_Goto(025," + strzero( Len(wBlc)+1 ,3) + ")')"
-                Else
-                   wBlc[wBlcNum] := wBlc[wBlcNum] + ",(wBlc[" + strzero( Len(wBlc)+1,3) + "]))"
-                EndIf
-
-             EndIf
-             *--------------------------------------*
-             *-----------------------------------------*
-
-             aAdd(wBlc,Space(00))
-             aAdd(wBlx,00       )
-             aAdd(wBlc_Open,.t.)
-             wBlcNum := Len(wBlc)
-             
-             wMatrixResult := space(00)
-
-             *-----direciona o bloco ForExit-----------*
-             **wForNum := Substr(wMMatrix[wx],6,3)
-             wy      := 00
-             For wy=1 to len(wBlc)
-                 If wBlc[wy] = 'cScriptForExit("' + wForNum 
-                    If wcDebug
-                       wBlc[wy] := wBlc[wy] + ",fdbg_Goto(015," + strzero( Len(wBlc)-1 ,3) + ")"
-                    Else
-                       **wBlc[wy] := wBlc[wy] + ", eVal(fcBlock(wBlc[" + strzero( Len(wBlc) ,3) + "]))"
+                //*-----direciona o bloco ForExit-----------*
+                //**wForNum = clipper.substr(wMMatrix[wx],6,3)
+                wy = 0;
+                for(wy=1; wy<=clipper.len(wBlc); wy++) {
+                    if(wBlc[wy] == 'cScriptForExit("' + wForNum) { 
+                        if(wcDebug) {
+                            wBlc[wy] = wBlc[wy] + ",fdbg_Goto(015," + clipper.strzero( clipper.len(wBlc)-1 ,3) + ")";
+                        }
+                    
                     EndIf
-                 
-                 EndIf
-             Next
-             *-----------------------------------------*
-             *-----direciona o bloco ForLoop-----------*
-            **wForNum := Substr(wMMatrix[wx-3],5,3)
-            ** wForNum := Substr(wMMatrix[wx],6,3)
-             wy      := 00
-             For wy=1 to len(wBlc)
-                 If wBlc[wy] = 'cScriptForLoop("' + wForNum 
-                    If wcDebug
-                       wBlc[wy] := wBlc[wy] + ",fdbg_Goto(016," + strzero( Len(wBlc)-1 ,3) + ")"
-                    Else
-                       **wBlc[wy] := wBlc[wy] + ", eVal(fcBlock(wBlc[" + strzero( Len(wBlc) ,3) + "]))"
-                    EndIf
-                 
-                 EndIf
-             Next
-             *--------------------------------------*
+                Next
 
-          EndIf
+                wy = 0;
+                for(var wy=1; wy<=clipper.len(wBlc); wy++) {
+                    if(wBlc[wy] == 'cScriptForLoop("' + wForNum) { 
+                        if(wcDebug) {
+                            wBlc[wy] = wBlc[wy] + ",fdbg_Goto(016," + clipper.strzero( clipper.len(wBlc)-1 ,3) + ")";
+                        }
+                    }
+                }
+                //*--------------------------------------*
+            }
        
-          wBlcNum       := Len(wBlc)
-          wMatrixResult := Space(00)
+            wBlcNum       = clipper.len(wBlc);
+            wMatrixResult = "";
+        }       
+
+        if(wBlcNum>2 && clipper.len(trim(wBlc[wBlcNum])) > 0) {
+            wBlc[wBlcNum] = wBlc[wBlcNum] + ",fdbg_Lin("+clipper.allTrim(str(wx-1)) + ")";
+            //wdbg_Trace[wPosTrace,05] = wLinNum
+        }
+
+        if(wcDebug) {
+            if(!c_infow.cEmpty(wMatrixResult)) {  //.and. ( (clipper.len(wMatrixResult) + clipper.len(wBlc[wBlcNum]) > 512 .or. wcDebug ))  // o Limite de expanção é de 704 bytes por bloco
+                if(!c_infow.cEmpty(wBlc[wBlcNum])) {  
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + ",";
+                }
+                if(wcDebug) {
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + "fdbg_Goto(017," + clipper.strzero(wBlcNum+1,3) + ")";
+                } else {
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + "eVal(fcBlock(wBlc[" + clipper.strzero(wBlcNum+1,3) + "]))";
+                }
+            
+                clipper.aAdd(wBlc,"");
+                clipper.aAdd(wBlx,0);
+                clipper.aAdd(wBlc_Open,true);
+                wBlcNum = clipper.len(wBlc);
+            }
+        } else {
+            //**If .not. c_infow.cEmpty(wMatrixResult)  //.and. ( (clipper.len(wMatrixResult) + clipper.len(wBlc[wBlcNum]) > 512 .or. wcDebug ))  // o Limite de expanção é de 704 bytes por bloco
+            if(!c_infow.cEmpty(wMatrixResult)  && (clipper.len(wMatrixResult) + clipper.len(wBlc[wBlcNum]) > 512 )) { // o Limite de expanção é de 704 bytes por bloco
+                if(!c_infow.cEmpty(wBlc[wBlcNum])) {
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + ",";
+                }
+                if(wcDebug) {
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + "fdbg_Goto(017," + clipper.strzero(wBlcNum+1,3) + ")";
+                } else {
+                    wBlc[wBlcNum] = wBlc[wBlcNum] + "eVal(fcBlock(wBlc[" + clipper.strzero(wBlcNum+1,3) + "]))";
+                }
+            
+                clipper.aAdd(wBlc,"");
+                clipper.aAdd(wBlx,0);
+                clipper.aAdd(wBlc_Open,true);
+                wBlcNum = clipper.len(wBlc);
+            }
+        }
+
+        if(!c_infow.cEmpty(wMatrixResult)) {
+            if(!c_infow.cEmpty(wBlc[wBlcNum])) {
+              wBlc[wBlcNum] = wBlc[wBlcNum] + ",";
+            }
+            wBlc[wBlcNum] = wBlc[wBlcNum] + wMatrixResult;
+            wBlx[wBlcNum] = wMatrixLinha;
+        }
+    }
        
-       Else
-       *****
-       EndIf       
+    clipper.aAdd(wBlc,"");     // #RETURN# 
+    clipper.aAdd(wBlx,0);     // #RETURN# 
 
-       If wBlcNum>2 .and. len(trim(wBlc[wBlcNum])) > 0
-         wBlc[wBlcNum] := wBlc[wBlcNum] + ",fdbg_Lin("+alltrim(str(wx-1)) + ")"
-         //wdbg_Trace[wPosTrace,05] := wLinNum
-       EndIf
-
-       If wcdebug
-          If .not. cEmpty(wMatrixResult)  //.and. ( (Len(wMatrixResult) + Len(wBlc[wBlcNum]) > 512 .or. wcDebug ))  // o Limite de expanção é de 704 bytes por bloco
-             If .not. cEmpty(wBlc[wBlcNum])
-                wBlc[wBlcNum] := wBlc[wBlcNum] + ","
-             EndIf
-             If wcDebug
-                wBlc[wBlcNum] := wBlc[wBlcNum] + "fdbg_Goto(017," + strzero(wBlcNum+1,3) + ")"
-             Else
-                wBlc[wBlcNum] := wBlc[wBlcNum] + "eVal(fcBlock(wBlc[" + strzero(wBlcNum+1,3) + "]))"
-             EndIf
-          
-             aAdd(wBlc,Space(00))
-             aAdd(wBlx,00       )
-             aAdd(wBlc_Open,.t.)
-             wBlcNum := Len(wBlc)
-          EndIf
-       Else
-          **If .not. cEmpty(wMatrixResult)  //.and. ( (Len(wMatrixResult) + Len(wBlc[wBlcNum]) > 512 .or. wcDebug ))  // o Limite de expanção é de 704 bytes por bloco
-          If .not. cEmpty(wMatrixResult)  .and. (Len(wMatrixResult) + Len(wBlc[wBlcNum]) > 512 )  // o Limite de expanção é de 704 bytes por bloco
-             If .not. cEmpty(wBlc[wBlcNum])
-                wBlc[wBlcNum] := wBlc[wBlcNum] + ","
-             EndIf
-             If wcDebug
-                wBlc[wBlcNum] := wBlc[wBlcNum] + "fdbg_Goto(017," + strzero(wBlcNum+1,3) + ")"
-             Else
-                wBlc[wBlcNum] := wBlc[wBlcNum] + "eVal(fcBlock(wBlc[" + strzero(wBlcNum+1,3) + "]))"
-             EndIf
-          
-             aAdd(wBlc,Space(00))
-             aAdd(wBlx,00       )
-             aAdd(wBlc_Open,.t.)
-             wBlcNum := Len(wBlc)
-          EndIf
-       Endif
-
-       If .not. cEmpty(wMatrixResult)
-          If .not. cEmpty(wBlc[wBlcNum])
-             wBlc[wBlcNum] := wBlc[wBlcNum] + ","
-          EndIf
-          wBlc[wBlcNum] := wBlc[wBlcNum] + wMatrixResult
-          wBlx[wBlcNum] := wMatrixLinha
-       EndIf
-   Next
-       
-   aAdd(wBlc,Space(00))     // #RETURN# 
-   aAdd(wBlx,00       )     // #RETURN# 
-          
-          
-   wy := 00
-   For wy=1 to Len(wBlc)
+    wy = 0;
+    for(wy=1; wy<=clipper.len(wBlc); wy++) {
       
-       If wBlc[wy] = "cIf("
-          wBlc[wy] = "cIf(" + Substr(wBlc[wy],8)
+        if(wBlc[wy] == "cIf(") {
+            wBlc[wy] = "cIf(" + clipper.substr(wBlc[wy],8);
 
-          wPos := At("ELSE",wBlc[wy])
-          If wPos > 0
-             wBlc[wy] = Substr(wBlc[wy],1,wPos-1) + Substr(wBlc[wy],wPos+07)
-          EndIf
+            wPos = clipper.at("ELSE",wBlc[wy]);
+            if(wPos > 0) {
+                wBlc[wy] = clipper.substr(wBlc[wy],1,wPos-1) + clipper.substr(wBlc[wy],wPos+07);
+            }
 
-          wPos := At("ELSE",wBlc[wy])
-          If wPos > 0
-             wBlc[wy] = Substr(wBlc[wy],1,wPos-1) + Substr(wBlc[wy],wPos+07)
-          EndIf
+            wPos = clipper.at("ELSE",wBlc[wy]);
+            if (wPos > 0) {
+                wBlc[wy] = clipper.substr(wBlc[wy],1,wPos-1) + clipper.substr(wBlc[wy],wPos+07);
+            }
+        }
+        if(wBlc[wy] == "BTHEN") {
+            wBlc[wy] = clipper.substr(wBlc[wy],09);
+        }
+        if(wBlc[wy] == "cFor(") {
+            wBlc[wy] = 'cFor("' + clipper.substr(wBlc[wy],10);
+        }
+        if(wBlc[wy] == "cWhile(") {
+            wBlc[wy] = "cWhile(" + clipper.substr(wBlc[wy],11);
+        }
 
-       Endif
-       If wBlc[wy] = "BTHEN"
-          wBlc[wy] = Substr(wBlc[wy],09)
-       EndIf
-       If wBlc[wy] = "cFor("
-          wBlc[wy] = 'cFor("' + Substr(wBlc[wy],10)
-       Endif
+        wPos = clipper.at("#RETURN#",wBlc[wy]);
+        if(wPos > 0) { 
+            if(wcDebug) {
+                wBlc[wy] = clipper.substr(wBlc[wy],1,wPos-1) + ",fdbg_Goto(018," + clipper.strzero( clipper.len(wBlc),3) + ")";
+            } else {
+                wBlc[wy] = clipper.substr(wBlc[wy],1,wPos-1) + ",eVal(fcBlock(wBlc[" + clipper.strzero( clipper.len(wBlc),3) + "]))";
+            }
+        }
+    }
 
-       If wBlc[wy] = "cWhile("
-          wBlc[wy] = "cWhile(" + Substr(wBlc[wy],11)
-       Endif
+    if(wcDebug) {
+        for(var wx=1; wx <= clipper.len(wBlx); wx++) { 
+            if(wblx[wx] > 0) { 
+                wdbg_MProc[ wdbg_MLin[wblx[wx]] ,3] = wblc[wx]
+                wdbg_MProc[ wdbg_MLin[wblx[wx]] ,4] = wx 
+            }
+        } 
+    }
 
-       wPos := At("#RETURN#",wBlc[wy])
-       If wPos > 0 
-          If wcDebug
-             wBlc[wy] := Substr(wBlc[wy],1,wPos-1) + ",fdbg_Goto(018," + strzero( Len(wBlc),3) + ")"
-          Else
-             wBlc[wy] := Substr(wBlc[wy],1,wPos-1) + ",eVal(fcBlock(wBlc[" + strzero( Len(wBlc),3) + "]))"
-          EndIf
-       EndIf
-   Next
+    if(!wcdebug) {
+        clipper.aAdd( wM_Objeto[wPosObj], wBlc )     // Armazena o script já compilado no 6 item da matrix wM_Objeto
+    }
 
-   If wcDebug
+    wdbg_Trace[wPosTrace,03] = wBlc[01]   // Paramameters
+    wdbg_Trace[wPosTrace,04] = wBlc[02]   // Privates
 
-      for wx=1 to len(wBlx) 
-          if wblx[wx] > 0 
+	cScriptAux(wBlc[03],wMParm,wSObjeto);
 
-             wdbg_MProc[ wdbg_MLin[wblx[wx]] ,3] := wblc[wx]
-             wdbg_MProc[ wdbg_MLin[wblx[wx]] ,4] := wx 
-          EndIf
-      Next    
-   
+    return null;
+}
+
+function cScriptAux(_wcBlock,_wM_Parm,_wPrcNome) {
+    var _wx , _wWork01 //, _wM_Private 
+                                                
+    if(!c_infow.cEmpty(wBlc[01])) {     // Bloco exclusivo para o PARAMETERS
+        _wM_Private = cStrToMatriz(wBlc[1],",","C");      
+      If len(_wM_Private) <> len(_wM_Parm)
+         cCancel("Quantidade de parametros inválidos na procedure (" + _wPrcNome + ")" )
+      Endif   
+      For _wx:=1 to len(_wM_Private)
+          _wWork01          := AllTrim(_wM_Private[_wx])
+          private &_wWork01 := _wM_Parm[_wx]
+      Next
    EndIf
 
-//  If upper(wObj_Nome) = "PRC_CICERO2"
-////      cFor("wx" , 1 , len(wblc)     ,1,"clog_sql(strzero(wx,2)+wBlc[wx])" )   // CICERO NAO EXCLUIR
-//      for wx=1 to len(wblc) 
-//          clog_sql(strzero(wx,2)+wBlc[wx])
-//      next
-//  ENDIF
-   
-   If .not. wcdebug
-      aAdd( wM_Objeto[wPosObj], wBlc )     // Armazena o script já compilado no 6 item da matrix wM_Objeto
+   If .Not.cEmpty(wBlc[02])     // Bloco exclusivo para o PRIVATE
+      _wM_Private:= cStrToMatriz(wBlc[02],",","C")   
+      For _wx:=1 to len(_wM_Private)
+          _wWork01 := AllTrim(_wM_Private[_wx])
+          Private &_wWork01
+      Next
    EndIf
 
-   wdbg_Trace[wPosTrace,03] := wBlc[01]   // Paramameters
-   wdbg_Trace[wPosTrace,04] := wBlc[02]   // Privates
+   if wcDebug
+      wdbg_MVar  := {}
+      If .Not.cEmpty(wBlc[02])     
+         _wM_Private:= cStrToMatriz(wBlc[02],",","C")   
+         For _wx:=1 to len(_wM_Private)
+             _wWork01 := AllTrim(_wM_Private[_wx])
+             Private &_wWork01
+             aAdd( wdbg_MVar , {_wWork01,"U",""})
+         Next
+      EndIf
+   
+      fobj_LoadAll("frm_prc_Debug") 
+      Return nil
+   Endif
+                           
+   _wcBlock := fcBlock(_wcBlock)
+   eVal(_wcBlock)
 
-	cScriptAux(wBlc[03],wMParm,wSObjeto)
+   __MVRELEASE()
 
-return null;
+    return null;
+}

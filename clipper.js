@@ -15,5 +15,28 @@
     function chr(charNumber) { if(charNumber==10) {return "\n";} return ""; } module.exports.chr = chr; 
     function at(find,text) { return text.indexOf(find)+1; } module.exports.at = at;
     function rAt(find,text) { return text.lastIndexOf(find)+1; } module.exports.rAt = rAt;
+    function valType(object) { 
+        if(typeof object === 'number') {
+            return 'N';
+        }
+        
+        if(typeof object === 'string') {
+            return 'C';
+        }
+
+        if(typeof object === 'boolean') {
+            return 'L';
+        }
+
+        if(typeof object === 'object') {
+            return 'O';
+        }
+
+        if(typeof object === 'function') {
+            return 'F';
+        }
+
+        return 'undefined';
+    } module.exports.valType = valType;
 
 })();
